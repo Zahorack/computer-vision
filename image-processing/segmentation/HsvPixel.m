@@ -1,0 +1,6 @@
+
+
+classdef HsvPixel
+
+    
+end
