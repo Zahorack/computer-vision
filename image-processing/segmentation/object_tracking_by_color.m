@@ -7,8 +7,8 @@ end
 hsvframe = HsvFrame;
 hsvmask = HsvFrame;
     
-videoWriter = VideoWriter('newfile')
-videoWriter.FrameRate = 10;
+videoWriter = VideoWriter('tennis_ball_tracked_by_color')
+videoWriter.FrameRate = 15;
 open(videoWriter);
 
 HueHigh = 90/255;
@@ -18,8 +18,8 @@ SaturationLow = 30/255;
 ValueHigh = 250/255;
 ValueLow = 10/255;
 
-[x,y,c]=size(rgb2hsv(readFrame(videoReader)));
-segment = zeros(x,y,c); 
+[xSize,ySize,cSize]=size(rgb2hsv(readFrame(videoReader)));
+segment = zeros(xSize,ySize,cSize); 
 
 
 while hasFrame(videoReader)
