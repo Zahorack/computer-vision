@@ -10,7 +10,7 @@ Matlab image processing implementation
 We are processing segmentation in HSV color format
 
 ```
-    frame = rgb2hsv(readFrame(videoReader));
+frame = rgb2hsv(readFrame(videoReader));
 ```
 
 Object ``HsvTresholds`` hold  values for thresholding segmentation
@@ -40,6 +40,8 @@ From the mask we can now compute center of mass and track color object. Optional
 Function ``segmentation.binary(frame)`` do matrix comparison for all 3 HSV dimensions - Hue, Saturation and Value. Sometimes enough to compare only 
 first Hue spectrum and save computation power.
 
+* [Source code](https://github.com/Zahorack/computer-vision/blob/master/image-processing/segmentation/object_tracking_by_color.m) - object_tracking_by_color.m
+
 ![](https://github.com/Zahorack/computer-vision/blob/master/image-processing/segmentation/animations/tennis_ball_tracked_by_color.gif)
 
 
@@ -48,8 +50,11 @@ first Hue spectrum and save computation power.
 Segmentation by shape, specifically by circle, we will implement in matlab with function ``imfindcircles``
 
 ```
-[centers, radii] = imfindcircles(frame,[(BallRadius-2) (BallRadius+8)], 'ObjectPolarity','dark','Sensitivity',0.9,'EdgeThreshold',0.1);
+[centers, radii] = imfindcircles(frame,[(BallRadius-2) (BallRadius+8)], ...
+    'ObjectPolarity','dark','Sensitivity',0.9,'EdgeThreshold',0.1);
 ```
+
+* [Source code](https://github.com/Zahorack/computer-vision/blob/master/image-processing/segmentation/object_tracking_by_shape.m) - object_tracking_by_shape.m
 
 ![](https://github.com/Zahorack/computer-vision/blob/master/image-processing/segmentation/animations/tennis_ball_tracked_by_shape.gif)
 
@@ -61,10 +66,13 @@ Now we merge both segmentation method to reach the best solution.
 Method ``imfindcircles`` returns coordinates and radius of found circle shape. With these values we create new ``MergeMask``
 
 ```
-        [I,J] = ndgrid(1:xFrameSize,1:yFrameSize);
-        MergeMask = double((I-centers(2)).^2+(J-centers(1)).^2 <= radii(1)^2);
-        binMask = binMask & MergeMask;
+[I,J] = ndgrid(1:xFrameSize,1:yFrameSize);
+MergeMask = double((I-centers(2)).^2+(J-centers(1)).^2 <= radii(1)^2);
+binMask = binMask & MergeMask;
 ```
+
+
+* [Source code](https://github.com/Zahorack/computer-vision/blob/master/image-processing/segmentation/object_tracking_by_color_and_shape.m) - object_tracking_by_color_and_shape.m
 
 
 ![](https://github.com/Zahorack/computer-vision/blob/master/image-processing/segmentation/animations/tennis_ball_tracked_by_color_and_shape.gif)
