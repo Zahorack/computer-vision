@@ -2,9 +2,16 @@
 
 classdef HoughLinesManager < handle
     
+    properties (Constant)
+        KalmanFilterQ = 0.025;
+        KalmanFilterR = 0.2; 
+    end
+    
     properties
         last_lines;
-        lines; 
+        lines;
+        kalmanPoint1;
+        kalmanPoint2;
     end
     
     methods (Access = public)
@@ -15,6 +22,9 @@ classdef HoughLinesManager < handle
                 obj.lines = varargin{1};
                 obj.last_lines = obj.lines;
             end
+            
+            obj.kalmanPoint1 =  KalmanFilterForPoint(obj.KalmanFilterQ, obj.KalmanFilterR);
+            obj.kalmanPoint2 =  KalmanFilterForPoint(obj.KalmanFilterQ, obj.KalmanFilterR);
         end
         
         function set(obj, lin)
@@ -92,12 +102,18 @@ classdef HoughLinesManager < handle
             
             persistent  old_search1 old_search2;
             
-            for idx = 1:length(points)
-               modules(idx) =  obj.moduleOfPoint(points(idx,:));
+            if isempty(points)
+                modules(1) = 0;
+            else
+                for idx = 1:length(points)
+                   modules(idx) =  obj.moduleOfPoint(points(idx,:));
+                end
             end
             
+   
             modMin = min(modules);
             modMax = max(modules);
+           
             
             id1 = 0;
             id2 = 0;
@@ -131,6 +147,9 @@ classdef HoughLinesManager < handle
                 p2 = old_search2;
             end
             
+            p1 = obj.kalmanPoint1.update(p1);
+            p2 = obj.kalmanPoint2.update(p2);
+            
         end
         
         function modul = moduleOfPoint(obj, point)
@@ -139,7 +158,7 @@ classdef HoughLinesManager < handle
             
         function [p1, p2] = resizeLineOnScreen(obj, screen, point1, point2)
             
-            [ySize,xSize,cSize] = size(screen)
+            [ySize,xSize,cSize] = size(screen);
             
             [k, q] = obj.getStraightLineEquation(point1, point2);
             
