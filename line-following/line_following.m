@@ -1,12 +1,15 @@
 close all;
-% clear all;
+clear all;
 
 if isunix
-    videoReader = vision.VideoFileReader('traffic.ogv')
+    videoReader = VideoReader('traffic.ogv')
 elseif ispc
-    videoReader = vision.VideoFileReader('traffic.mp4')
+    videoReader = VideoReader('traffic.mp4')
 end
 
+videoWriter = VideoWriter('animations/lane_departure_warning')
+videoWriter.FrameRate = 15;
+open(videoWriter);
 
 set(gcf, 'DoubleBuffer', 'on');
 
@@ -18,24 +21,26 @@ DebugEnabled = 0;
 FrameFilterOrder = 3;
 FrameFilterPeriod = 5;
 FrameResizeScale = 0.25;
-
 MyLaneAngleLimit = 60;
 SideLaneAngleLimit = 80;
 
 
+% Custom objects
 frameFilter = FrameSequnceFilter(FrameFilterOrder, FrameFilterPeriod);
-
 myLaneLeftLineManager = HoughLinesManager();
 myLaneRightLineManager = HoughLinesManager();
 rightLaneRightLineManager = HoughLinesManager();
 leftLaneLeftLineManager = HoughLinesManager();
 
+% Global variables
+WarningBlinkState = 0;
+
 
 % while ~isDone(videoReader)
 % for frameCounter=1:videoReader.NumFrames
-for frameCounter = 1:20
+for frameCounter = 1:130
     frameCounter
-    traffic = videoReader();
+    traffic = readFrame(videoReader);
     traffic = imresize(traffic, FrameResizeScale);
     
     if(FrameResizeScale == 0.5)
@@ -152,27 +157,68 @@ for frameCounter = 1:20
     rightLaneMask = createLaneMaskWithOffset(traffic, rp1, rp2, srp1, srp2, xOffsetLow, yOffsetLow);
     leftLaneMask = createLaneMaskWithOffset(traffic, lp1, lp2, slp1, slp2, xOffsetLow, yOffsetLow);
   
-    ColorIntensity = 50;
-    traffic(:,:,3) = traffic(:,:,3) + (rightLaneMask).*ColorIntensity/255;
-    traffic(:,:,3) = traffic(:,:,3) + (leftLaneMask).*ColorIntensity/255;
-    traffic(:,:,2) = traffic(:,:,2) + (myLaneMask).*ColorIntensity/255;
+    t1 = [(lp1(1) + rp1(1))/2, 0]
+    t2 = [(lp2(1) + rp2(1))/2, 80]
     
+    xy = [t1; t2];
+    plot(xy(:,1)+xOffsetLow,xy(:,2)+yOffsetLow,'LineWidth',1,'Color','y');
+    [ySize,xSize,cSize] = size(traffic);
+    
+    sensitivity = 10;
+    
+    if(t2(1) > (xSize/2 + sensitivity))
+        myLaneColorIntensity = 50;
+        myLaneColor = 2;
+        myLeftLineColor = "red";
+    else
+        myLaneColorIntensity = 50;
+        myLaneColor = 2;
+        myLeftLineColor = "green";
+    end
+    
+    if(t2(1) < (xSize/2 - sensitivity))
+        myLaneColorIntensity = 50;
+        myLaneColor = 2;
+        myRightLineColor = "magenta";
+        if mod(frameCounter, 3)
+            traffic = insertText(traffic,[130, 90],'LDW','BoxOpacity',0.6,'BoxColor','magenta');
+        end
+    else
+        myLaneColorIntensity = 50;
+        myLaneColor = 2;
+        myRightLineColor = "green";
+    end
+    
+    traffic = insertText(traffic,[t1(1)-20, 30],'myLane','BoxOpacity',0.4,'BoxColor','green', 'FontSize',10);
+    traffic = insertText(traffic,[25, 80],'leftLane','BoxOpacity',0.3,'BoxColor','blue', 'FontSize',10);
+    traffic = insertText(traffic,[240, 80],'rightLane','BoxOpacity',0.3,'BoxColor','blue', 'FontSize',10);
 
+    ColorIntensity = 50;
+    traffic(:,:,3) = traffic(:,:,3) + uint8(rightLaneMask).*ColorIntensity;
+    traffic(:,:,3) = traffic(:,:,3) + uint8(leftLaneMask).*ColorIntensity;
+    traffic(:,:,myLaneColor) = traffic(:,:,myLaneColor) + uint8(myLaneMask).*myLaneColorIntensity;
     
+%     objectImage = insertShape(frame,'Rectangle',[(x-25) (y-25) 50 50],'Color','red');
+    
+   
     figure(1)
-    imshowpair(traffic,edges, 'montage'); hold on;
-    xy = [rp2; rp1];
-    plot(xy(:,1)+xOffsetLow,xy(:,2)+yOffsetLow,'LineWidth',2,'Color','green');
-    xy = [lp1; lp2];
-    plot(xy(:,1)+xOffsetLow,xy(:,2)+yOffsetLow,'LineWidth',2,'Color','green');
-    xy = [srp2; srp1];
-    plot(xy(:,1)+xOffsetLow,xy(:,2)+yOffsetLow,'LineWidth',2,'Color','blue');
-    xy = [slp2; slp1];
-    plot(xy(:,1)+xOffsetLow,xy(:,2)+yOffsetLow,'LineWidth',2,'Color','blue');
+%     imshowpair(traffic,edges, 'montage'); hold on;
     
+    xo = xOffsetLow; yo = yOffsetLow;
+    xy = [rp2; rp1];
+    traffic = insertShape(traffic,'Line', [xy(1,1)+xo xy(1,2)+yo xy(2,1)+xo xy(2,2)+yo],'LineWidth',2,'Color',myRightLineColor);
+    xy = [lp1; lp2];
+    traffic = insertShape(traffic,'Line',  [xy(1,1)+xo xy(1,2)+yo xy(2,1)+xo xy(2,2)+yo],'LineWidth',2,'Color',myLeftLineColor);
+%     xy = [srp2; srp1];
+%     traffic = insertShape(traffic,'Line',  [xy(1,1)+xo xy(1,2)+yo xy(2,1)+xo xy(2,2)+yo],'LineWidth',1,'Color','blue');
+%     xy = [slp2; slp1];
+%     traffic = insertShape(traffic,'Line',  [xy(1,1)+xo xy(1,2)+yo xy(2,1)+xo xy(2,2)+yo],'LineWidth',1,'Color','blue');
+
+    imshow(traffic, []); hold on;
+    writeVideo(videoWriter, traffic);
 end
 
-
+close(videoWriter)
 
 
 function mask = createIgnoreMask(frame)

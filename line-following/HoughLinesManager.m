@@ -101,6 +101,9 @@ classdef HoughLinesManager < handle
             points = obj.mergePoints();
             
             persistent  old_search1 old_search2;
+            persistent event_counter;
+            
+            event_counter = event_counter +1;
             
             if isempty(points)
                 modules(1) = 0;
@@ -147,8 +150,10 @@ classdef HoughLinesManager < handle
                 p2 = old_search2;
             end
             
-            p1 = obj.kalmanPoint1.update(p1);
-            p2 = obj.kalmanPoint2.update(p2);
+            if event_counter > 10
+                p1 = obj.kalmanPoint1.update(p1);
+                p2 = obj.kalmanPoint2.update(p2);
+            end
             
         end
         
@@ -162,8 +167,12 @@ classdef HoughLinesManager < handle
             
             [k, q] = obj.getStraightLineEquation(point1, point2);
             
-            p1 = [(0 - q)/k, 0];
-            p2 = [(ySize - q)/k, ySize];
+            x1 = (0 - q)/k;
+            x2 =(ySize - q)/k;
+
+            
+            p1 = [x1, 0];
+            p2 = [x2, ySize];
             
         end
         
