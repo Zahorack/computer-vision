@@ -36,7 +36,7 @@ rightLineManager = HoughLinesManager();
 
 % while ~isDone(videoReader)
 % for frameCounter=1:videoReader.NumFrames
-for frameCounter = 1:130
+for frameCounter = 1:5
     frameCounter
     traffic = videoReader();
     traffic = imresize(traffic, FrameResizeScale);
@@ -61,7 +61,8 @@ for frameCounter = 1:130
     edges = edges | frameFilter.update(edges);
 
     
-
+    figure(1)
+    imshowpair(road,edges, 'montage'); hold on;
     
     % Hough transform
     [H,T,R] = hough(edges,'RhoResolution',0.5,'Theta',[-80:0.5:-10 10:0.5:80]);
@@ -95,41 +96,44 @@ for frameCounter = 1:130
     end
     
     if DebugEnabled == 0
+        
         if(idl > 0)
             leftLineManager.set(myLeftLines);
         else
             leftLineManager.lastSet();
-        end    
-        [lp1, lp2] = leftLineManager.pointsAverageByModule(10)
-        lp1 = kalmanPoint1.update(lp1);
-        lp2 = kalmanPoint2.update(lp2);
-        [lp1, lp2] = leftLineManager.resizeLineOnScreen(edges, lp1, lp2);
-
+        end
             
+        [p1, p2] = leftLineManager.pointsAverageByModule(10)
+%         p1 = kalmanPoint1.update(p1);
+%         p2 = kalmanPoint2.update(p2);
+
+        [p1, p2] = leftLineManager.resizeLineOnScreen(edges, p1, p2);
+
+        xy = [p1; p2];
+        plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
+        plot(xy(1,1),xy(1,2),'x','LineWidth',2,'Color','yellow');
+        plot(xy(2,1),xy(2,2),'x','LineWidth',2,'Color','red');
+            
+
+
         if(idr > 0)
             rightLineManager.set(myRightLines);
         else 
             rightLineManager.lastSet();
         end
-        [rp1, rp2] = rightLineManager.pointsAverageByModule(10);
-        rp1 = kalmanPoint3.update(rp1);
-        rp2 = kalmanPoint4.update(rp2);
-        [rp1, rp2] = rightLineManager.resizeLineOnScreen(edges, rp1, rp2);
+        
+        [p1, p2] = rightLineManager.pointsAverageByModule(10);
+%         p1 = kalmanPoint3.update(p1);
+%         p2 = kalmanPoint4.update(p2);
+        [p1, p2] = rightLineManager.resizeLineOnScreen(edges, p1, p2);
+        xy = [p2; p1];
+        plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
+        plot(xy(1,1),xy(1,2),'x','LineWidth',2,'Color','yellow');
+        plot(xy(2,1),xy(2,2),'x','LineWidth',2,'Color','red');
+
     end
     
-    
-    laneMask = createLaneMask(road, lp1, lp2, rp1, rp2);
-    road(:,:,3) = road(:,:,3) + (laneMask).*5;
-    
-    figure(1)
-    imshowpair(road,edges, 'montage'); hold on;
-    xy = [rp2; rp1];
-    plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
-    xy = [lp1; lp2];
-    plot(xy(:,1),xy(:,2),'LineWidth',2,'Color','green');
 end
-
-
 
 
 function mask = createIgnoreMask(frame)
@@ -157,13 +161,11 @@ end
 
 function mask = createLaneMask(frame, lp1, lp2, rp1, rp2)
 
-    [ySize,xSize,cSize] = size(frame);
+    c = []; 
+    r = [];
+    mask = poly2mask(c,r,ySize,xSize);
     
-    x = [lp1(1) rp1(1) rp2(1) lp2(1)];
-    y = [lp1(2) rp1(2) rp2(2) lp2(2)];
-    mask = poly2mask(x,y,ySize,xSize);
-    
-%     figure(6)
-%     imshow(mask)
+    figure(6)
+    imshow(mask)
 end
 

@@ -3,7 +3,8 @@
 classdef HoughLinesManager < handle
     
     properties
-       lines; 
+        last_lines;
+        lines; 
     end
     
     methods (Access = public)
@@ -12,12 +13,24 @@ classdef HoughLinesManager < handle
             
             if nargin == 1
                 obj.lines = varargin{1};
+                obj.last_lines = obj.lines;
             end
         end
         
         function set(obj, lin)
            obj.lines = lin; 
+           
+           if isempty(obj.lines)
+              obj.lines = obj.last_lines;
+           end
+           
+           obj.last_lines = obj.lines;
         end
+                
+        function lastSet(obj)
+              obj.lines = obj.last_lines;
+        end
+
                 
         function points = mergePoints(obj)
             points = zeros(length(obj.lines)*2,2);
@@ -102,18 +115,17 @@ classdef HoughLinesManager < handle
                     search2(id2,:) = points(idx, :); 
                 end                
             end
-            
-  
-            if(id1 > 1)
-                p1 = mean(search1);
+                        
+            if(id1 > 0)
+                p1 = [mean(search1(:,1)), mean(search1(:,2))];
                 old_search1 = p1;
             else
                 p1 = old_search1;
             end
             
             
-            if(id2 > 1)
-                p2 = mean(search2);
+            if(id2 > 0)
+                p2 = [mean(search2(:,1)), mean(search2(:,2))];
                 old_search2 = p2;
             else
                 p2 = old_search2;
@@ -127,9 +139,24 @@ classdef HoughLinesManager < handle
             
         function [p1, p2] = resizeLineOnScreen(obj, screen, point1, point2)
             
-            p1 = point1;
-            p2 = point2;
+            [ySize,xSize,cSize] = size(screen);
             
+            [k, q] = obj.getStraightLineEquation(point1, point2);
+            
+            p1 = [(point1(2) - q)/k];
+            p2 = [(point2(2) - q)/k];
+            
+        end
+        
+        function [k, q] = getStraightLineEquation(obj, p1, p2)
+            
+            A = [p1(1) 1; p2(1) 1];
+            B = [p1(2); p2(2)];
+            
+            C = A\B;
+            
+            k = C(1);
+            q = C(2);
         end
 
     end
