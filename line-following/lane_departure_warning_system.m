@@ -20,7 +20,7 @@ DebugEnabled = 0;
 % Constants
 FrameFilterOrder = 3;
 FrameFilterPeriod = 5;
-FrameResizeScale = 0.25;
+FrameResizeScale = 0.5;
 MyLaneAngleLimit = 60;
 SideLaneAngleLimit = 80;
 
