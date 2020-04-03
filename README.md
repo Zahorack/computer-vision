@@ -5,8 +5,8 @@
 
 [line-following-repositary](https://github.com/Zahorack/computer-vision/tree/master/line-following)
 
-![](https://github.com/Zahorack/computer-vision/blob/master/line-following/animations/gifs/lane_departure_warning.gif)
-![](https://github.com/Zahorack/computer-vision/blob/master/line-following/animations/gifs/lane_following_edges_frame_sequence_filter.gif)
+<img src="https://github.com/Zahorack/computer-vision/blob/master/line-following/animations/gifs/lane_departure_warning.gif" width="512">
+<img src="https://github.com/Zahorack/computer-vision/blob/master/line-following/animations/gifs/lane_following_edges_frame_sequence_filter.gif" width="512">
 
 
 
