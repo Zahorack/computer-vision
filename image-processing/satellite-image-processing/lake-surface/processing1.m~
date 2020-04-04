@@ -1,6 +1,0 @@
-
-img = imread('src/osirid_lake_4K.jpg');
-
-water = segment_water(img);
-
-gray = rg
